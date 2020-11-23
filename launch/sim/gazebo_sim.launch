@@ -1,0 +1,163 @@
+<launch>
+    <!-- Set arguments. Change values in this section to control various parameters of execution. -->
+    <!-- There are some parameters that can be changed in other launch files but you should generally leave them as they are -->
+    <!-- ********** START OF SECTION ********** -->
+    <arg name="num_of_robots" default="6"/>         <!-- Number of robots used. -->
+    <arg name="map_name" default="test_10x10"/>     <!-- Name of the map used. -->
+    <arg name="ctrl_loop_freq" default="10"/>       <!-- Frequency used by Reynolds rules. -->
+    <arg name="data_stream_freq" default="10"/>     <!-- Position streaming frequency, used by Kalman filter. -->
+    <arg name="debug_boids" default="false"/>       <!-- Enable debugging for Reynolds controller node. -->
+    <arg name="debug_kalman" default="false"/>      <!-- Enable debugging for Kalman filter node. -->
+    <arg name="use_kalman" default="false"/>        <!-- Use either estimated data from Kalman filter or true data from simulator. -->
+    <arg name="wait_time" default="0"/>             <!-- During first X seconds of execution, no velocity commands are sent to robots. -->
+    <arg name="start_time" default="2"/>            <!-- During first X seconds after "wait_time", inital velocity commands are sent to robots. -->
+    <!-- *********** END OF SECTION *********** -->
+
+    <arg name="map_world" default="$(find sphero_formation)/resources/sim/$(arg map_name)_$(arg num_of_robots).world"/>
+    <arg name="map_yaml" default="$(find sphero_formation)/resources/maps/$(arg map_name).yaml"/>
+
+    <!-- Set arguments as ros parameter so all nodes can access them. -->
+    <param name="num_of_robots" type="int" value="$(arg num_of_robots)"/>
+    <param name="ctrl_loop_freq" type="int" value="$(arg ctrl_loop_freq)"/>
+    <param name="data_stream_freq" type="int" value="$(arg data_stream_freq)"/>
+    <param name="debug_boids" type="boolean" value="$(arg debug_boids)"/>
+    <param name="debug_kalman" type="boolean" value="$(arg debug_kalman)"/>
+    <param name="use_kalman" type="boolean" value="$(arg use_kalman)"/>
+    <param name="wait_time" type="double" value="$(arg wait_time)"/>
+    <param name="start_time" type="double" value="$(arg start_time)"/>
+    <param name="run_type" type="string" value="sim"/>
+
+    <!-- Start map server. -->
+    <node pkg="map_server" type="map_server" args="$(arg map_yaml)" name="map_server"/>
+
+    <!-- Start Stage simulator. -->
+    <!--node pkg="stage_ros" type="stageros" name="stage_ros" args="$(arg map_world)"/-->
+
+    <!-- Start rqt GUI and dynamic reconfigure node. -->
+    <node pkg="rqt_reconfigure" type="rqt_reconfigure" name="rqt_dynamic_reconfigure"/>
+    <node pkg="sphero_formation" type="dynamic_reconfigure_node.py" name="dyn_reconf" output="screen"/>
+
+    <!-- Start simulation_tf node: provide tf transforms for simulation. -->
+    <node pkg="sphero_formation" type="simulation_tf.py" name="tf_server" />
+
+    <!-- Start Kalman filter nodes launcher. -->
+    <!--node if="$(arg use_kalman)" pkg="sphero_ros_control" type="kalman_filter_sim_launch.sh" name="kalman_launcher" args="$(arg num_of_robots)" output="screen"/-->
+
+
+    <!-- Start rviz. -->
+    <param name="robot_description" textfile="$(find sphero_formation)/resources/simple_ball.urdf"/>
+    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find sphero_formation)/launch/sim/sphero_sim.rviz"/>
+
+  
+
+  <env name="GAZEBO_MODEL_PATH" value="$(find sphero_gazebo)/models:$(optenv GAZEBO_MODEL_PATH)"/>
+
+  <arg name="debug" default="false"/>
+  <arg name="gui" default="true"/>
+  <arg name="headless" default="false"/>
+  <arg name="pause" default="false"/>
+
+  <!-- Start Gazebo with a blank world -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find sphero_gazebo)/worlds/arena.world"/> 
+    <arg name="debug" value="$(arg debug)" />
+    <arg name="gui" value="$(arg gui)" />
+    <arg name="paused" value="$(arg pause)"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="headless" value="$(arg headless)"/>
+  </include>
+
+  <!-- Static transform from map to odom frame. -->
+  <!--node pkg="tf" type="static_transform_publisher" name="static_transform_publisher" respawn="true" args="0 0 0 0 0 0 /map /odom_frame 1000" /-->
+
+  <!-- Static map server. -->
+  <!--node pkg="map_server" type="map_server" name="map_server" respawn="true" args="$(find sphero_gazebo)/maps/empty_map.yaml">
+    <param name="frame_id" value="map" />
+  </node-->
+
+  <!-- Start Rviz for visualization. -->
+  <!--node type="rviz" name="rviz" pkg="rviz" args="-d $(find sphero_gazebo)/launch/arena.rviz" /-->
+
+  <!-- Spawn Spheros and their control plugins in Gazebo -->
+  <group ns="robot_0">
+    <include file="$(find sphero_gazebo)/launch/sphero.launch.xml">
+      <arg name="index" value="1" />
+      <arg name="x" value="2.331" />
+      <arg name="y" value="3.586" />
+      <arg name="z" value="1" />
+    </include>
+  </group>
+
+  <group ns="robot_1">
+    <include file="$(find sphero_gazebo)/launch/sphero.launch.xml">
+      <arg name="index" value="2" />
+      <arg name="x" value="1.652" />
+      <arg name="y" value="3.087" />
+      <arg name="z" value="1" />
+    </include>
+  </group>
+
+  <group ns="robot_2">
+    <include file="$(find sphero_gazebo)/launch/sphero.launch.xml">
+      <arg name="index" value="3" />
+      <arg name="x" value="1.682" />
+      <arg name="y" value="3.554" />
+      <arg name="z" value="1" />
+    </include>
+  </group>
+
+  <group ns="robot_3">
+    <include file="$(find sphero_gazebo)/launch/sphero.launch.xml">
+      <arg name="index" value="4" />
+      <arg name="x" value="2.024" />
+      <arg name="y" value="3.286" />
+      <arg name="z" value="1" />
+    </include>
+  </group>
+
+    <group ns="robot_4">
+    <include file="$(find sphero_gazebo)/launch/sphero.launch.xml">
+      <arg name="index" value="5" />
+      <arg name="x" value="2.029" />
+      <arg name="y" value="2.838" />
+      <arg name="z" value="1" />
+    </include>
+  </group>
+ 
+    <group ns="robot_5">
+    <include file="$(find sphero_gazebo)/launch/sphero.launch.xml">
+      <arg name="index" value="6" />
+      <arg name="x" value="2.403" />
+      <arg name="y" value="3.105" />
+      <arg name="z" value="1" />
+    </include>
+  </group>
+
+</launch>
+
+
+
+
+    <!-- Load the urdf file in the parameter server variable robot description if it wasn't loaded before -->
+    <!--param name="robot_description" command="cat $(find sphero_formation)/urdf/simple_ball.urdf" /-->
+
+
+    <!-- Publish TF with robot_state_publisher >
+    <node name= "robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen">
+    <remap from/-->
+
+
+
+
+    <!--arg name="model" default="$(find sphero_formation)/resources/simple_ball.urdf"/>
+    <param name="robot_description" command="$(find xacro)/xacro.py $(arg model)"/>
+    <arg name="rvizconfig" default="$(find urdf_tutorial)/rviz/urdf.rviz" />
+
+    <node name="joint_state_publisher_gui" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui" />
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" /-->
+
+
+
+
+

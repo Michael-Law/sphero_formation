@@ -1,0 +1,5 @@
+<launch>
+<node name="robot_move" pkg="sphero_formation" type="move.py" respawn="false" output="screen">
+  </node>
+
+</launch>
